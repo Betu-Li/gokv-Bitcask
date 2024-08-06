@@ -29,7 +29,8 @@ func NewDB(opt *Options) (db *DB, err error) {
 	}
 	// 判断目录是否存在
 	if isExist, _ := isDirExist(opt.Dir); isExist {
-		if err := db.recovery(opt); err != nil {
+		// 从磁盘文件中恢复数据
+		if err := db.Recovery(opt); err != nil {
 			return nil, err
 		}
 		return db, nil
