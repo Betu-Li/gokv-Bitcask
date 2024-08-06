@@ -19,10 +19,17 @@ type Entry struct {
 type Meta struct {
 	crc       uint32 //用于校验数据的正确性
 	position  uint64 //数据在文件中的位置
-	timeStamp uint32 //数据的时间戳
+	timeStamp uint64 //数据的时间戳
 	keySize   uint32
 	valueSize uint32
 	flag      byte //标记是否删除
+}
+
+// NewEntry 创建一个新的空Entry
+func NewEntry() *Entry {
+	return &Entry{
+		meta: &Meta{},
+	}
 }
 
 // Encode 将Entry编码成byte数组
@@ -32,7 +39,7 @@ func (e *Entry) Encode() []byte {
 	buf := make([]byte, size)
 	//以小端字节序将meta写入到字节数组中
 	binary.LittleEndian.PutUint64(buf[4:12], e.meta.position)
-	binary.LittleEndian.PutUint32(buf[12:20], e.meta.timeStamp)
+	binary.LittleEndian.PutUint64(buf[12:20], e.meta.timeStamp)
 	binary.LittleEndian.PutUint32(buf[20:24], e.meta.keySize)
 	binary.LittleEndian.PutUint32(buf[24:28], e.meta.valueSize)
 	buf[28] = e.meta.flag
@@ -52,16 +59,17 @@ func (e *Entry) DecodeMeta(buf []byte) {
 	e.meta = &Meta{
 		crc:       binary.LittleEndian.Uint32(buf[0:4]),
 		position:  binary.LittleEndian.Uint64(buf[4:12]),
-		timeStamp: binary.LittleEndian.Uint32(buf[12:20]),
+		timeStamp: binary.LittleEndian.Uint64(buf[12:20]),
 		keySize:   binary.LittleEndian.Uint32(buf[20:24]),
 		valueSize: binary.LittleEndian.Uint32(buf[24:28]),
 	}
 }
 
 // DecodePayload 从Entry中解码出key和value
-func (e *Entry) DecodePayload(buf []byte) {
+func (e *Entry) DecodePayload(buf []byte) error {
 	e.key = buf[28 : 28+int(e.meta.keySize)]
 	e.value = buf[28+int(e.meta.keySize) : 28+int(e.meta.keySize)+int(e.meta.valueSize)]
+	return nil
 }
 
 // Size Entry的size是meta+key+value的长度。
