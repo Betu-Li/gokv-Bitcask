@@ -5,6 +5,8 @@ type Index struct {
 	fid       int   // file id
 	off       int64 // 位置
 	timeStamp uint64
+	keySize   int
+	valueSize int
 }
 
 // keyDir is the directory of keys
