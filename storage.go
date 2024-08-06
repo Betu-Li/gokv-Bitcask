@@ -28,6 +28,33 @@ type Storage struct {
 	fds        map[int]*os.File // db中所有数据文件的文件描述符（fd）缓存，免得重复打开文件描述符导致性能消耗。
 }
 
+// NewStorage 新建一个Storage
+func NewStorage(dir string, size int64) (s *Storage, err error) {
+	err = os.Mkdir(dir, os.ModePerm) // 创建一个目录
+	if err != nil {
+		return nil, err
+	}
+	// 创建并初始化一个Storage对象
+	s = &Storage{
+		dir:      dir,
+		fileSize: size,
+		fds:      map[int]*os.File{},
+	}
+	s.dir = dir
+	s.ActiveFile = &ActiveFile{
+		fid: 0,
+		off: 0,
+	}
+	path := s.getPath()
+	fd, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm) // 创建一个文件作为活动文件
+	if err != nil {
+		return nil, err
+	}
+	s.ActiveFile.f = fd
+	s.fds[0] = fd // 缓存文件描述符
+	return s, nil
+}
+
 // 写入数据
 func (s *Storage) writeAt(bytes []byte) (i *Index, err error) {
 	err = s.ActiveFile.writeAt(bytes)

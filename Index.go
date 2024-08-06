@@ -11,3 +11,14 @@ type Index struct {
 type keyDir struct {
 	index map[string]*Index
 }
+
+// 找到key对应的index
+func (kd *keyDir) find(key string) *Index {
+	i := kd.index[key]
+	return i
+}
+
+// 更新keyDir
+func (kd *keyDir) update(key string, i *Index) {
+	kd.index[key] = i
+}
