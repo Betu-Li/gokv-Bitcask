@@ -1,4 +1,4 @@
-package main
+package gokv_Bitcask
 
 const (
 	DefaultSegmentSize = 256 * MB

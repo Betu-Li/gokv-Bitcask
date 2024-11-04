@@ -1,4 +1,4 @@
-package main
+package gokv_Bitcask
 
 // Index is the index of a file
 type Index struct {

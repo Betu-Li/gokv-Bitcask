@@ -1,4 +1,4 @@
-package main
+package gokv_Bitcask
 
 import (
 	"os"
