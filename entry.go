@@ -84,3 +84,15 @@ func (e *Entry) getCRC(buf []byte) uint32 {
 	crc = crc32.Update(crc, crc32.IEEETable, e.value)
 	return crc
 }
+
+// NewEntryWithData 通过key和value创建一个Entry
+func NewEntryWithData(key []byte, value []byte) *Entry {
+	return &Entry{
+		key:   key,
+		value: value,
+		meta: &Meta{
+			keySize:   uint32(len(key)),
+			valueSize: uint32(len(value)),
+		},
+	}
+}
