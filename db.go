@@ -38,6 +38,7 @@ func NewDB(opt *Options) (db *DB, err error) {
 	// 创建一个新的Storage
 	var fileSize = getSegmentSize(opt.SegmentSize)
 	db.s, err = NewStorage(opt.Dir, fileSize)
+	fmt.Println("db.s", db.s)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +50,7 @@ func (db *DB) Merge() error {
 	// 给整个db加入写锁防止在写入数据的时候有别的程序并发写入。当然这里实则锁住了整个db，效率很低。
 	db.rw.Lock()
 	defer db.rw.Unlock()
+	// 获取fid缓存
 	fids, err := getFids(db.s.dir)
 	if err != nil {
 		return err
@@ -154,4 +156,47 @@ func (db *DB) Recovery(opt *Options) error {
 		}
 	}
 	return nil
+}
+
+// Set 设置数据
+func (db *DB) Set(key []byte, value []byte) error {
+	// 读写锁
+	db.rw.Lock()
+	defer db.rw.Unlock()
+
+	// 用数据新建一个entry
+	entry := NewEntryWithData(key, value)
+	buf := entry.Encode() // 解码
+	// 写入数据并建立index
+	index, err := db.s.writeAt(buf)
+	if err != nil {
+		return err
+	}
+	// 更新index
+	index.keySize = len(key)
+	index.valueSize = len(value)
+	db.kd.update(string(key), index)
+	return nil
+}
+
+// Get 获取数据
+func (db *DB) Get(key []byte) (value []byte, err error) {
+	// 读写锁
+	db.rw.RLock()
+	defer db.rw.RUnlock()
+
+	// 通过key找到对应的index
+	i := db.kd.find(string(key))
+	if i == nil {
+		return nil, KeyNotFoundErr
+	}
+	// 从磁盘中读取数据
+	dataSize := MetaSize + i.keySize + i.valueSize
+	buf := make([]byte, dataSize)
+
+	entry, err := db.s.readFullEntry(i.fid, i.off, buf)
+	if err != nil {
+		return nil, err
+	}
+	return entry.value, nil
 }
