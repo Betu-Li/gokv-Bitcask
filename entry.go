@@ -67,8 +67,10 @@ func (e *Entry) DecodeMeta(buf []byte) {
 
 // DecodePayload 从Entry中解码出key和value
 func (e *Entry) DecodePayload(buf []byte) error {
-	e.key = buf[28 : 28+int(e.meta.keySize)]
-	e.value = buf[28+int(e.meta.keySize) : 28+int(e.meta.keySize)+int(e.meta.valueSize)]
+	keyHighBound := int(e.meta.keySize)
+	valueHighBound := keyHighBound + int(e.meta.valueSize)
+	e.key = buf[0:keyHighBound]
+	e.value = buf[keyHighBound:valueHighBound]
 	return nil
 }
 

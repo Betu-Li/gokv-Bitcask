@@ -107,6 +107,7 @@ func (s *Storage) readEntry(fid int, off int64) (e *Entry, err error) {
 	return e, nil
 }
 
+// readFullEntry 读取一个完整的Entry
 func (s *Storage) readFullEntry(fid int, off int64, buf []byte) (e *Entry, err error) {
 	err = s.readAt(fid, off, buf)
 	if err != nil {
@@ -119,7 +120,7 @@ func (s *Storage) readFullEntry(fid int, off int64, buf []byte) (e *Entry, err e
 	if err != nil {
 		return nil, err
 	}
-	crc := e.getCRC(buf)
+	crc := e.getCRC(buf[:MetaSize])
 	if e.meta.crc != crc {
 		return nil, crcErr
 	}
